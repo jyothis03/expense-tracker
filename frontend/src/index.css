@@ -110,28 +110,57 @@ body {
   padding: 2rem 1.5rem 4rem;
 }
 
-/* ── Header ───────────────────────────────────────────────── */
+/* ── Header & Navigation ──────────────────────────────────── */
 
-.header {
+.nav-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.nav-header__brand {
+  display: flex;
+  align-items: center;
 }
 
 .header__title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
+  margin: 0;
   background: linear-gradient(135deg, var(--text-primary), var(--accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.header__subtitle {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  font-weight: 400;
+.nav-header__links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.2s var(--ease);
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+}
+
+.nav-link--active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.nav-header__add-btn {
+  margin-left: 1rem;
 }
 
 /* ── Glass Card ───────────────────────────────────────────── */

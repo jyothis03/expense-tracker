@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import "./index.css";
-import SummaryDashboard from "./components/SummaryDashboard";
-import FilterBar from "./components/FilterBar";
-import ExpenseList from "./components/ExpenseList";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import NavBar from "./components/NavBar";
+import Dashboard from "./pages/Dashboard";
+import Expenses from "./pages/Expenses";
 import ExpenseModal from "./components/ExpenseModal";
 import Toast from "./components/Toast";
 import {
@@ -106,29 +107,30 @@ export default function App() {
   // ── Render ─────────────────────────────────────────────────
 
   return (
-    <div className="app">
-      <header className="header">
-        <div>
-          <h1 className="header__title">Expense Tracker</h1>
-          <p className="header__subtitle">Track your spending, stay in control</p>
-        </div>
-        <button className="btn btn--primary" onClick={handleAdd}>
-          + Add Expense
-        </button>
-      </header>
+    <BrowserRouter>
+      <div className="app">
+        <NavBar onAddExpense={handleAdd} />
 
-      <SummaryDashboard key={summaryKey} />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Dashboard summaryKey={summaryKey} />} />
+            <Route
+              path="/expenses"
+              element={
+                <Expenses
+                  filters={filters}
+                  setFilters={setFilters}
+                  expenses={expenses}
+                  loading={loading}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              }
+            />
+          </Routes>
+        </main>
 
-      <FilterBar filters={filters} onFilterChange={setFilters} />
-
-      <ExpenseList
-        expenses={expenses}
-        loading={loading}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      <ExpenseModal
+        <ExpenseModal
         isOpen={modalOpen}
         expense={editingExpense}
         onClose={handleCloseModal}
@@ -140,6 +142,7 @@ export default function App() {
         onUndo={handleUndo}
         onExpire={handleToastExpire}
       />
-    </div>
+      </div>
+    </BrowserRouter>
   );
 }
