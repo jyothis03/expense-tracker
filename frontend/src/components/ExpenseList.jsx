@@ -45,12 +45,69 @@ export default function ExpenseList({ expenses, loading, onEdit, onDelete }) {
     );
   }
 
+  const handleExportCSV = () => {
+    const headers = ["Date", "Title", "Category", "Amount", "Note"];
+    const escapeCSV = (val) => {
+      if (val === null || val === undefined) return "";
+      const str = String(val);
+      if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const rows = expenses.map((e) => [
+      e.date,
+      e.title,
+      e.category,
+      e.amount,
+      e.note || "",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map(escapeCSV).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `expenses_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div>
       <div className="expense-list__header">
         <span className="expense-list__count">
           {expenses.length} expense{expenses.length !== 1 ? "s" : ""}
         </span>
+        <button
+          className="btn btn--ghost btn--sm"
+          onClick={handleExportCSV}
+          title="Export visible expenses as CSV"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            width="16"
+            height="16"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+            />
+          </svg>
+          Export CSV
+        </button>
       </div>
 
       <div className="expense-list">
