@@ -1,0 +1,1 @@
+{'available': True, 'insights': '• Your total spending for June 20'}

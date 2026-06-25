@@ -187,3 +187,91 @@ def monthly_summary(
     breakdown = {row[0]: Decimal(str(row[1])) for row in rows}
 
     return MonthlySummary(month=month, total=total, breakdown=breakdown)
+
+
+# ── AI Insights ──────────────────────────────────────────────
+
+
+@router.get("/insights")
+def ai_insights(
+    month: Optional[str] = Query(
+        None,
+        pattern=r"^\d{4}-\d{2}$",
+        description="Month in YYYY-MM format, defaults to current month",
+    ),
+    session: Session = Depends(get_session),
+):
+    """Generate AI-powered spending insights using Gemini 2.5 Flash.
+
+    Returns {"available": false} if the API key is not configured or
+    the model call fails — the frontend hides the insights card gracefully.
+    """
+    import os
+
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return {"available": False}
+
+    # ── Resolve month ────────────────────────────────────────
+    if month is None:
+        today = dt.date.today()
+        month = today.strftime("%Y-%m")
+
+    year, mon = map(int, month.split("-"))
+    if mon < 1 or mon > 12:
+        return {"available": False, "error": "Invalid month"}
+
+    first_day = dt.date(year, mon, 1)
+    if mon == 12:
+        last_day = dt.date(year + 1, 1, 1)
+    else:
+        last_day = dt.date(year, mon + 1, 1)
+
+    # ── Gather expense data ──────────────────────────────────
+    expenses = session.exec(
+        select(Expense).where(
+            Expense.is_deleted == False,  # noqa: E712
+            Expense.date >= first_day,
+            Expense.date < last_day,
+        ).order_by(Expense.date.desc())
+    ).all()
+
+    if len(expenses) == 0:
+        return {"available": False}
+
+    total = float(sum(e.amount for e in expenses))
+    breakdown: dict[str, float] = {}
+    for e in expenses:
+        breakdown[e.category] = breakdown.get(e.category, 0) + float(e.amount)
+
+    expense_dicts = [
+        {"date": str(e.date), "title": e.title, "amount": float(e.amount), "category": e.category}
+        for e in expenses
+    ]
+
+    month_names = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
+    ]
+    month_label = f"{month_names[mon - 1]} {year}"
+
+    # ── Build prompt and call Gemini ─────────────────────────
+    from prompts import INSIGHTS_SYSTEM_PROMPT, build_insights_user_prompt
+
+    user_prompt = build_insights_user_prompt(month_label, total, breakdown, expense_dicts)
+
+    try:
+        import google.generativeai as genai
+
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(
+            "gemini-2.5-flash",
+            system_instruction=INSIGHTS_SYSTEM_PROMPT,
+        )
+        response = model.generate_content(
+            user_prompt,
+        )
+        return {"available": True, "insights": response.text}
+    except Exception as exc:
+        return {"available": False, "error": str(exc)}
+

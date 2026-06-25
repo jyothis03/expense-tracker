@@ -24,10 +24,8 @@ function formatCurrency(amount) {
   }).format(amount);
 }
 
-export default function SummaryDashboard() {
+export default function SummaryDashboard({ year, month, setYear, setMonth }) {
   const [summary, setSummary] = useState(null);
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [loading, setLoading] = useState(true);
   const [viewType, setViewType] = useState("pie");
 

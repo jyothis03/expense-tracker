@@ -19,6 +19,13 @@ Track spending, view monthly summaries with category breakdowns, filter expenses
 
 ### 1. Backend
 
+**API Key Setup (Required for AI Insights):**
+The app uses Google's Gemini 2.5 Flash for natural language spending analysis. You need to set an API key:
+1. Copy `backend/.env.example` to `backend/.env`
+2. Add your key: `GEMINI_API_KEY=your_api_key_here`
+
+*(Note: The app degrades gracefully. If no key is set, the AI Insights feature simply hides itself without throwing errors.)*
+
 ```bash
 cd backend
 
@@ -69,6 +76,9 @@ The app opens at `http://localhost:5173`.
 | Filter by date range (from/to) | ✅ |
 | Filter by title (partial text match, debounced) | ✅ |
 | Month navigation in summary (prev/next arrows) | ✅ |
+| CSV Export of filtered expenses | ✅ |
+| Multi-page routing (Dashboard vs Expenses) | ✅ |
+| AI Spending Insights (Gemini 2.5 Flash) | ✅ |
 
 ### Edge Cases Handled
 
@@ -86,10 +96,11 @@ The app opens at `http://localhost:5173`.
 ### Design
 
 - Dark-mode glassmorphism UI
-- CSS-only horizontal bar charts for category breakdown
+- Interactive Donut Pie Chart + Bar charts (via Recharts)
 - Animated card list with staggered fade-in
 - Modal with keyboard dismiss (Escape) and overlay click
-- Responsive layout (mobile-friendly)
+- Responsive multi-page layout (React Router)
+- Professional SVG icons (Heroicons)
 - Google Fonts (Inter) for clean typography
 
 ---
@@ -110,7 +121,7 @@ For a single-user local app, SQLite is the obvious choice: zero config, no serve
 
 ### Why React + Vite (vanilla CSS)?
 
-React provides a good component model for the interactive features (modal, toast, filters). Vite gives instant HMR and zero-config JSX support. Vanilla CSS (with custom properties) avoids build-tool complexity from Tailwind/CSS-in-JS while still enabling a polished design system.
+React provides a good component model for the interactive features (modal, toast, filters). We use React Router for clean multi-page navigation. Vite gives instant HMR and zero-config JSX support. Vanilla CSS (with custom properties) avoids build-tool complexity from Tailwind/CSS-in-JS while still enabling a polished design system.
 
 **Tradeoff:** More CSS to write manually, but full control over the glassmorphism aesthetic.
 
@@ -119,6 +130,10 @@ React provides a good component model for the interactive features (modal, toast
 Prevents accidental data loss without the jarring "Are you sure?" dialog. The expense is marked `is_deleted=True` immediately (so it disappears from the list), then permanently deleted after 5 seconds. Clicking "Undo" restores it.
 
 **Tradeoff:** Slightly more complex state management (3 API calls: soft-delete, restore, permanent-delete) but much better UX.
+
+### Why Prompts in `prompts.py`?
+
+Treating AI prompts as first-class artifacts (rather than hardcoding them in route handlers) is a core AI engineering practice. It decouples the prompt logic from the HTTP logic, making the prompts easier to version, test, and swap out independently.
 
 ---
 
@@ -130,19 +145,24 @@ expense_tracker/
 │   ├── main.py            # FastAPI app, CORS, lifespan
 │   ├── database.py        # SQLite engine + session dependency
 │   ├── models.py          # SQLModel table + request/response schemas
-│   ├── routes.py          # REST API endpoints (CRUD + summary)
+│   ├── prompts.py         # AI system prompt and user prompt builder
+│   ├── routes.py          # REST API endpoints (CRUD + summary + insights)
 │   ├── seed.py            # 15 sample expenses
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx        # Root component, state orchestration
+│   │   ├── App.jsx        # Root component, router setup
 │   │   ├── api.js         # Fetch-based API client
 │   │   ├── index.css      # Full design system (dark glassmorphism)
 │   │   ├── main.jsx       # React entry point
+│   │   ├── pages/         # Route pages
+│   │   │   ├── Dashboard.jsx
+│   │   │   └── Expenses.jsx
 │   │   └── components/
-│   │       ├── SummaryDashboard.jsx  # Monthly stats + bar chart
+│   │       ├── NavBar.jsx            # Top navigation
+│   │       ├── SummaryDashboard.jsx  # Stats + Recharts Pie/Bar
 │   │       ├── FilterBar.jsx         # Category, date range, search
-│   │       ├── ExpenseList.jsx       # Card list with actions
+│   │       ├── ExpenseList.jsx       # Card list + CSV Export
 │   │       ├── ExpenseModal.jsx      # Add/edit form modal
 │   │       └── Toast.jsx             # Undo delete notification
 │   ├── index.html
@@ -162,6 +182,7 @@ expense_tracker/
 | `POST` | `/api/expenses/:id/restore` | Undo delete |
 | `DELETE` | `/api/expenses/:id/permanent` | Permanent delete |
 | `GET` | `/api/summary?month=YYYY-MM` | Monthly summary |
+| `GET` | `/api/insights?month=YYYY-MM` | Gemini AI spending insights |
 
 ---
 
@@ -185,4 +206,3 @@ expense_tracker/
 | Deployment | Runs locally only, per spec |
 | Pagination | Overkill for personal expense tracking volumes |
 | URL-synced filters | Nice-to-have, not essential for the core UX |
-| Export (CSV/PDF) | Would be useful but prioritized core features |

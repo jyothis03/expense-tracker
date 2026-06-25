@@ -1,5 +1,8 @@
 """FastAPI application entry point."""
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -29,7 +32,7 @@ app = FastAPI(
 # Allow Vite dev server
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://localhost:5174"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

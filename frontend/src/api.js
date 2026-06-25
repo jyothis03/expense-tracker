@@ -82,3 +82,9 @@ export async function fetchSummary(month) {
   const params = month ? `?month=${month}` : "";
   return request(`${BASE_URL}/summary${params}`);
 }
+
+/** Get AI-powered spending insights */
+export async function fetchInsights(month) {
+  const params = month ? `?month=${month}` : "";
+  return request(`${BASE_URL}/insights${params}`);
+}
