@@ -1,8 +1,8 @@
 # 💰 Expense Tracker
 
-A personal expense tracker web app built with **FastAPI + React (Vite) + SQLite (SQLModel)**.
+An AI-powered personal expense tracker built with **FastAPI + React (Vite) + SQLite (SQLModel)**.
 
-Track spending, view monthly summaries with category breakdowns, filter expenses, and manage them with soft-delete + undo.
+Track your spending, get natural language AI insights on your monthly habits, view category breakdowns, and manage your data with robust soft-delete capabilities.
 
 ![Stack](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square)
 ![Stack](https://img.shields.io/badge/Frontend-React_+_Vite-61DAFB?style=flat-square)
@@ -10,199 +10,118 @@ Track spending, view monthly summaries with category breakdowns, filter expenses
 
 ---
 
-## 🚀 How to Run
+## 🧠 How & Why It Was Built
+
+This project was built with a strong focus on **AI Engineering** and **Production Readiness**:
+- **AI as a Feature, Not a Gimmick**: The Gemini integration isn't just an API call shoved into a route. Prompts are treated as first-class artifacts (`prompts.py`) decoupled from the REST plumbing. This allows for independent iteration on prompt quality.
+- **Graceful Degradation**: If the Gemini API key is missing or the API call fails, the application doesn't crash. The backend safely catches the error and returns an `available: false` flag, and the frontend silently hides the AI Insights card, ensuring the core app remains 100% usable.
+- **Robust Data Handling**: We use `SQLModel` to bridge SQLAlchemy and Pydantic, ensuring that the exact same schema validates incoming requests and defines the database tables.
+
+---
+
+## ✨ Features
+
+- **AI Spending Insights**: Get 2-3 data-driven, natural language bullet points analyzing your month's spending (powered by Gemini 2.5 Flash).
+- **Interactive Dashboards**: Toggle between Donut Pie Charts and Bar Charts for category breakdowns.
+- **Expense Management**: Add, edit, and delete expenses (Title, Amount, Category, Date, Note).
+- **Safe Deletion**: Soft-delete functionality with a 5-second "Undo" toast before permanent deletion.
+- **Advanced Filtering**: Filter by Category, Date Range (From/To), and a debounced Title search.
+- **CSV Export**: Export your currently filtered view to a clean CSV file with one click.
+- **Responsive Design**: Dark-mode glassmorphism UI that feels premium and dynamic.
+
+---
+
+## 🚀 Running Instructions
 
 ### Prerequisites
+- **Python 3.11+**
+- **Node.js 18+**
 
-- **Python 3.11+** (tested with 3.13)
-- **Node.js 18+** (tested with 22.14)
+### 1. Backend (FastAPI)
 
-### 1. Backend
+**⚠️ IMPORTANT: Gemini API Key Setup**
+To enable AI Insights, you *must* add your Gemini API key.
+1. Navigate to the `backend/` directory.
+2. Copy `.env.example` to a new file named `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Open `.env` and add your key: `GEMINI_API_KEY=your_actual_api_key_here`
 
-**API Key Setup (Required for AI Insights):**
-The app uses Google's Gemini 2.5 Flash for natural language spending analysis. You need to set an API key:
-1. Copy `backend/.env.example` to `backend/.env`
-2. Add your key: `GEMINI_API_KEY=your_api_key_here`
-
-*(Note: The app degrades gracefully. If no key is set, the AI Insights feature simply hides itself without throwing errors.)*
-
+**Run the Server:**
 ```bash
 cd backend
 
-# Create a virtual environment (recommended)
+# Create and activate a virtual environment
 python -m venv .venv
+# Windows (PowerShell): .venv\Scripts\Activate.ps1
+# Mac/Linux: source .venv/bin/activate
 
-# Activate the virtual environment:
-# On Windows (PowerShell):
-.venv\Scripts\Activate.ps1
-# On Windows (CMD):
-.venv\Scripts\activate.bat
-# On macOS/Linux:
-source .venv/bin/activate
+# Install dependencies explicitly to the active python environment
+python -m pip install -r requirements.txt
 
-# Install dependencies and run
-pip install -r requirements.txt
+# Start the server
 python -m uvicorn main:app --reload --port 8000
 ```
+*(On the first run, it will automatically create `expenses.db` and seed it with 15 sample transactions).*
 
-The API starts at `http://localhost:8000`. On first run, it creates `expenses.db` and seeds 15 sample expenses.
+### 2. Frontend (React + Vite)
 
-### 2. Frontend
-
+Open a **new** terminal window:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-
-The app opens at `http://localhost:5173`.
-
-> **Note:** Both servers must be running simultaneously. The frontend proxies API calls to `localhost:8000`.
-
----
-
-## ✅ Features Completed
-
-### Core (all done)
-
-| Feature | Status |
-|---------|--------|
-| Add expense (title, amount, category, date, note) | ✅ |
-| View expense list (sorted by date, most recent first) | ✅ |
-| Edit any expense | ✅ |
-| Delete any expense (soft-delete + 5s undo toast) | ✅ |
-| Monthly summary (total + category breakdown) | ✅ |
-| Filter by category | ✅ |
-| Filter by date range (from/to) | ✅ |
-| Filter by title (partial text match, debounced) | ✅ |
-| Month navigation in summary (prev/next arrows) | ✅ |
-| CSV Export of filtered expenses | ✅ |
-| Multi-page routing (Dashboard vs Expenses) | ✅ |
-| AI Spending Insights (Gemini 2.5 Flash) | ✅ |
-
-### Edge Cases Handled
-
-| Edge Case | Handling |
-|-----------|----------|
-| Empty expense list | Friendly empty state with message |
-| Invalid amount (0, negative, non-numeric) | Server rejects with 422 + client-side validation |
-| Empty title | Required field, validated both layers |
-| Future dates | Allowed (pre-logging upcoming bills) |
-| Date range where from > to | Returns empty results gracefully |
-| Very long notes | Capped at 500 chars |
-| No expenses in current month | Summary shows ₹0 with empty breakdown |
-| Rapid delete + undo | Toast replaces previous, latest undo active |
-
-### Design
-
-- Dark-mode glassmorphism UI
-- Interactive Donut Pie Chart + Bar charts (via Recharts)
-- Animated card list with staggered fade-in
-- Modal with keyboard dismiss (Escape) and overlay click
-- Responsive multi-page layout (React Router)
-- Professional SVG icons (Heroicons)
-- Google Fonts (Inter) for clean typography
+The app will open at `http://localhost:5173`. Both servers must be running simultaneously!
 
 ---
 
 ## 🏗️ Stack Choices & Tradeoffs
 
-### Why FastAPI + SQLModel?
+### Backend
+- **FastAPI + SQLModel**: Chosen for incredible developer velocity and automatic OpenAPI (`/docs`) generation. SQLModel eliminates the "two models" problem by merging SQLAlchemy tables and Pydantic validation schemas.
+  * *Tradeoff*: SQLModel is newer than SQLAlchemy and has minor namespace quirks (like clashing with the Pydantic `date` type), requiring careful imports.
+- **SQLite**: Perfect for a local, single-user tool. Zero configuration required.
+  * *Tradeoff*: No concurrent write support, which is entirely fine for a personal tracker.
 
-**FastAPI** gives automatic request validation via Pydantic, auto-generated OpenAPI docs (`/docs`), and async support — all for very little boilerplate. **SQLModel** (by the same author) bridges Pydantic and SQLAlchemy, so the same model class serves as both the database table definition and the API schema. This eliminates the "two models" problem.
-
-**Tradeoff:** SQLModel is relatively young and has some quirks (e.g., field name `date` clashing with the `date` type in newer Pydantic). We worked around this by importing `datetime as dt`.
-
-### Why SQLite?
-
-For a single-user local app, SQLite is the obvious choice: zero config, no server process, just a file. It still gives full SQL with indexing, aggregation, and filtering — which we use heavily for the summary and filter endpoints.
-
-**Tradeoff:** No concurrent write support, but irrelevant for single-user.
-
-### Why React + Vite (vanilla CSS)?
-
-React provides a good component model for the interactive features (modal, toast, filters). We use React Router for clean multi-page navigation. Vite gives instant HMR and zero-config JSX support. Vanilla CSS (with custom properties) avoids build-tool complexity from Tailwind/CSS-in-JS while still enabling a polished design system.
-
-**Tradeoff:** More CSS to write manually, but full control over the glassmorphism aesthetic.
-
-### Why soft-delete with undo toast?
-
-Prevents accidental data loss without the jarring "Are you sure?" dialog. The expense is marked `is_deleted=True` immediately (so it disappears from the list), then permanently deleted after 5 seconds. Clicking "Undo" restores it.
-
-**Tradeoff:** Slightly more complex state management (3 API calls: soft-delete, restore, permanent-delete) but much better UX.
-
-### Why Prompts in `prompts.py`?
-
-Treating AI prompts as first-class artifacts (rather than hardcoding them in route handlers) is a core AI engineering practice. It decouples the prompt logic from the HTTP logic, making the prompts easier to version, test, and swap out independently.
+### Frontend
+- **React + Vite**: Instant hot-module replacement and a massive ecosystem for charts.
+- **Recharts**: Simple, declarative composable charts that work flawlessly with React.
+- **Vanilla CSS (Custom Properties)**: Used to achieve a highly customized, premium glassmorphic dark mode without the build overhead of Tailwind or CSS-in-JS.
+  * *Tradeoff*: Requires manually writing and organizing CSS classes.
 
 ---
 
-## 📁 Project Structure
+## 🛡️ Edge Cases Handled
 
-```
-expense_tracker/
-├── backend/
-│   ├── main.py            # FastAPI app, CORS, lifespan
-│   ├── database.py        # SQLite engine + session dependency
-│   ├── models.py          # SQLModel table + request/response schemas
-│   ├── prompts.py         # AI system prompt and user prompt builder
-│   ├── routes.py          # REST API endpoints (CRUD + summary + insights)
-│   ├── seed.py            # 15 sample expenses
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx        # Root component, router setup
-│   │   ├── api.js         # Fetch-based API client
-│   │   ├── index.css      # Full design system (dark glassmorphism)
-│   │   ├── main.jsx       # React entry point
-│   │   ├── pages/         # Route pages
-│   │   │   ├── Dashboard.jsx
-│   │   │   └── Expenses.jsx
-│   │   └── components/
-│   │       ├── NavBar.jsx            # Top navigation
-│   │       ├── SummaryDashboard.jsx  # Stats + Recharts Pie/Bar
-│   │       ├── FilterBar.jsx         # Category, date range, search
-│   │       ├── ExpenseList.jsx       # Card list + CSV Export
-│   │       ├── ExpenseModal.jsx      # Add/edit form modal
-│   │       └── Toast.jsx             # Undo delete notification
-│   ├── index.html
-│   └── package.json
-└── README.md
-```
+1. **Empty States**: If no expenses exist for a month, the UI renders a friendly "No expenses found" graphic instead of blank charts or broken UI elements.
+2. **Invalid Inputs**: 
+   - Trying to submit a negative amount (`-50`), string (`"abc"`), or $0 is caught instantly by both Frontend Form validation *and* Backend Pydantic validation (`gt=0`).
+3. **Weird Date Ranges**: 
+   - Setting a filter where `From Date` > `To Date` safely returns `[]` without throwing SQL errors.
+   - Requesting `month=2026-15` to the summary/insights API throws a clean `400 Bad Request` caught by our Regex validator.
+4. **Future Dates**: Allowed by design to let users pre-log upcoming expected bills.
+5. **No AI Key**: As mentioned, gracefully bypasses the AI call and hides the UI element.
 
-### API Endpoints
+---
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/expenses` | List (with filter query params) |
-| `POST` | `/api/expenses` | Create |
-| `GET` | `/api/expenses/:id` | Get one |
-| `PUT` | `/api/expenses/:id` | Update (partial) |
-| `DELETE` | `/api/expenses/:id` | Soft-delete |
-| `POST` | `/api/expenses/:id/restore` | Undo delete |
-| `DELETE` | `/api/expenses/:id/permanent` | Permanent delete |
-| `GET` | `/api/summary?month=YYYY-MM` | Monthly summary |
-| `GET` | `/api/insights?month=YYYY-MM` | Gemini AI spending insights |
+## ⚖️ What's Done vs. What's Skipped
+
+### Done (Focus Areas)
+- **Backend**: Strict Pydantic request validation, decoupled AI prompt architecture, soft-delete system, relational querying for aggregations.
+- **Frontend**: Full CRUD integration, debounced search, CSV generation, interactive visualizations.
+
+### Skipped (Out of Scope)
+- **Authentication (Backend)**: Skipped. This is designed as a single-user local tool.
+- **Pagination (Backend)**: Skipped. For personal tracking (<2,000 rows a year), returning all rows sorted by date is performant enough and simplifies frontend filtering.
+- **Test Suite**: Explicitly skipped to focus on shipping core features rapidly.
+- **URL-Synced Filters (Frontend)**: Skipped. If you refresh the page, your search/category filters reset.
 
 ---
 
 ## ⚠️ Known Rough Edges
-
-1. **No persistent filter state** — filters reset on page refresh (no URL query param sync).
-2. **Summary refreshes via key remount** — works but causes a brief flash; a context-based approach would be smoother.
-3. **No pagination** — all expenses load at once. Fine for personal use (<1000 expenses), but would need pagination for larger datasets.
-4. **`datetime.utcnow()` deprecation** — Python 3.12+ deprecates this; using it for simplicity but should migrate to `datetime.now(UTC)`.
-5. **No authentication** — single-user app by design, per spec.
-6. **Currency hardcoded** — INR (₹) is hardcoded in the frontend formatting.
-
----
-
-## 🚫 What Was Skipped (and Why)
-
-| Feature | Reason |
-|---------|--------|
-| Test suite | Explicitly out of scope per spec |
-| Authentication | Single-user app, no multi-user support needed |
-| Deployment | Runs locally only, per spec |
-| Pagination | Overkill for personal expense tracking volumes |
-| URL-synced filters | Nice-to-have, not essential for the core UX |
+1. **Summary Refresh Flash**: When an expense is added/deleted, the summary chart forces a component remount via a `key` prop increment. This works perfectly but causes a brief visual flash.
+2. **Hardcoded Currency**: The app assumes INR (₹) across the board.
+3. **Python 3.12+ `datetime.utcnow()` Warning**: Using `utcnow()` which is deprecated in newer Python versions in favor of timezone-aware datetimes.
+4. **No AI Caching**: Currently, the app fetches AI insights fresh every time the component loads. Adding Redis (backend) or Local Storage (frontend) caching would be much better to reduce API costs and latency.
