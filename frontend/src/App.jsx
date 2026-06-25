@@ -77,36 +77,30 @@ export default function App() {
   };
 
   const handleDelete = async (id) => {
-    try {
-      await deleteExpense(id);
-      // Remove from local list immediately
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
-      refreshSummary();
-      // Show undo toast
-      setToast({ id });
-    } catch (err) {
-      console.error("Failed to delete:", err);
+    // If a toast is already active, force its expiration to complete that deletion
+    if (toast) {
+      await handleToastExpire(toast.id);
     }
+    // Remove from local list immediately
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+    // Show undo toast
+    setToast({ id });
   };
 
-  const handleUndo = async (id) => {
-    try {
-      await restoreExpense(id);
-      setToast(null);
-      loadExpenses();
-      refreshSummary();
-    } catch (err) {
-      console.error("Failed to restore:", err);
-    }
+  const handleUndo = (id) => {
+    setToast(null);
+    // Reload from backend (the item was never actually deleted there yet)
+    loadExpenses();
   };
 
   const handleToastExpire = async (id) => {
     try {
       await permanentDeleteExpense(id);
+      refreshSummary(); // Update summary only after actual deletion
     } catch (err) {
       console.error("Failed to permanently delete:", err);
     }
-    setToast(null);
+    setToast((prev) => (prev && prev.id === id ? null : prev));
   };
 
   // ── Render ─────────────────────────────────────────────────

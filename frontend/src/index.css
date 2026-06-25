@@ -639,17 +639,25 @@ body {
 .toast__undo {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--accent);
-  background: none;
+  color: #fff;
+  background: var(--accent);
   border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.75rem;
   cursor: pointer;
   font-family: inherit;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  transition: color 0.2s var(--ease);
+  transition: all 0.2s var(--ease);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 .toast__undo:hover {
-  color: var(--accent-hover);
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.toast__undo:active {
+  transform: translateY(0);
 }
 
 .toast__timer {

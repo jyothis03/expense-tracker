@@ -38,7 +38,7 @@ export default function ExpenseModal({ isOpen, expense, onClose, onSave }) {
     setServerError("");
   }, [expense, isOpen]);
 
-  if (!isOpen) return null;
+
 
   const validate = () => {
     const errs = {};
@@ -101,6 +101,8 @@ export default function ExpenseModal({ isOpen, expense, onClose, onSave }) {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>

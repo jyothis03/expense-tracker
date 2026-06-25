@@ -1,6 +1,7 @@
 """Seed data — realistic sample expenses for the current month."""
 
 import datetime as dt
+from decimal import Decimal
 from sqlmodel import Session, select
 
 from models import Expense, CategoryEnum
@@ -57,7 +58,7 @@ def seed_expenses(session: Session) -> None:
         expense_date = today - dt.timedelta(days=item["days_ago"])
         expense = Expense(
             title=item["title"],
-            amount=item["amount"],
+            amount=Decimal(item["amount"]),
             category=item["category"],
             date=expense_date,
             note=item["note"],

@@ -1,6 +1,7 @@
 """REST API routes for expenses and monthly summary."""
 
 import datetime as dt
+from decimal import Decimal
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -172,7 +173,7 @@ def monthly_summary(
             Expense.date < last_day,
         )
     ).one()
-    total = float(total_result)
+    total = Decimal(str(total_result))
 
     # Breakdown by category
     rows = session.exec(
@@ -183,6 +184,6 @@ def monthly_summary(
         ).group_by(Expense.category)
     ).all()
 
-    breakdown = {row[0].value: float(row[1]) for row in rows}
+    breakdown = {row[0]: Decimal(str(row[1])) for row in rows}
 
     return MonthlySummary(month=month, total=total, breakdown=breakdown)

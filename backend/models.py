@@ -1,6 +1,7 @@
 """Data models — Expense table + request/response schemas."""
 
 import datetime as dt
+from decimal import Decimal
 from enum import Enum
 from typing import Optional
 
@@ -26,7 +27,7 @@ class Expense(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str = Field(min_length=1, max_length=100, index=True)
-    amount: float = Field(gt=0)
+    amount: Decimal = Field(gt=0, decimal_places=2, max_digits=10)
     category: CategoryEnum = Field(index=True)
     date: dt.date = Field(default_factory=dt.date.today, index=True)
     note: Optional[str] = Field(default=None, max_length=500)
@@ -41,7 +42,7 @@ class ExpenseCreate(SQLModel):
     """Body for POST /api/expenses."""
 
     title: str = Field(min_length=1, max_length=100)
-    amount: float = Field(gt=0)
+    amount: Decimal = Field(gt=0, decimal_places=2, max_digits=10)
     category: CategoryEnum
     date: dt.date = Field(default_factory=dt.date.today)
     note: Optional[str] = Field(default=None, max_length=500)
@@ -51,7 +52,7 @@ class ExpenseUpdate(SQLModel):
     """Body for PUT /api/expenses/{id}.  All fields optional."""
 
     title: Optional[str] = Field(default=None, min_length=1, max_length=100)
-    amount: Optional[float] = Field(default=None, gt=0)
+    amount: Optional[Decimal] = Field(default=None, gt=0, decimal_places=2, max_digits=10)
     category: Optional[CategoryEnum] = None
     date: Optional[dt.date] = None
     note: Optional[str] = Field(default=None, max_length=500)
@@ -65,7 +66,7 @@ class ExpenseRead(SQLModel):
 
     id: int
     title: str
-    amount: float
+    amount: Decimal
     category: CategoryEnum
     date: dt.date
     note: Optional[str]
@@ -76,5 +77,5 @@ class MonthlySummary(SQLModel):
     """Shape returned by GET /api/summary."""
 
     month: str  # "YYYY-MM"
-    total: float
-    breakdown: dict[str, float]  # category -> total
+    total: Decimal
+    breakdown: dict[CategoryEnum, Decimal]  # category -> total
